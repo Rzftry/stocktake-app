@@ -38,9 +38,7 @@ def parse(txt):
         if not line:
             continue
 
-        # =========================
-        # SKIP NOISE / HEADER BLOCK
-        # =========================
+        # skip headers
         if any(x in line.upper() for x in [
             "DEPT",
             "BRAND DESCRIPTION",
@@ -48,9 +46,6 @@ def parse(txt):
             "ACTUAL STOCK",
             "VARIANCE",
             "MARK ON%",
-            "QTY",
-            "COST (RM)",
-            "RETAIL (RM)",
             "REPORT CODE",
             "PRINTED BY",
             "STORE",
@@ -58,15 +53,11 @@ def parse(txt):
         ]):
             continue
 
-        if "<----" in line or "---->" in line or "-----" in line:
+        if "<----" in line or "---->" in line:
             continue
 
-        if "PAGE" in line:
-            continue
-
-        # =========================
-        # DETECT SKU LINE
-        # =========================
+        # detect SKU row
+        import re
         m = re.match(r'^(\d+)\s+(.+?)\s{2,}(.+?)\s+(\d{6,})\s+(.*)$', line)
 
         if m:
@@ -80,32 +71,32 @@ def parse(txt):
             data.append(current)
             continue
 
-        # =========================
-        # DETECT OUTRIGHT / VALUE ROW
-        # =========================
+        # detect Outright line
         if "Outright:" in line and current:
+
             nums = re.findall(r'[\d\.\-]+', line)
 
-           if len(nums) >= 12:
-    current.update({
-        "actual_qty": fix_num(nums[0]),
-        "actual_cost": fix_num(nums[1]),
-        "actual_retail": fix_num(nums[2]),
-        "actual_markon": fix_num(nums[3]),
+            # IMPORTANT FIX HERE
+            if len(nums) >= 12:
 
-        "ri_qty": fix_num(nums[4]),
-        "ri_cost": fix_num(nums[5]),
-        "ri_retail": fix_num(nums[6]),
-        "ri_markon": fix_num(nums[7]),
+                current.update({
+                    "actual_qty": float(nums[0]),
+                    "actual_cost": float(nums[1]),
+                    "actual_retail": float(nums[2]),
+                    "actual_markon": float(nums[3]),
 
-        "var_qty": fix_num(nums[8]),
-        "var_cost": fix_num(nums[9]),
-        "var_retail": fix_num(nums[10]),
-        "var_markon": fix_num(nums[11]),
-    })
+                    "ri_qty": float(nums[4]),
+                    "ri_cost": float(nums[5]),
+                    "ri_retail": float(nums[6]),
+                    "ri_markon": float(nums[7]),
+
+                    "var_qty": float(nums[8]),
+                    "var_cost": float(nums[9]),
+                    "var_retail": float(nums[10]),
+                    "var_markon": float(nums[11]),
+                })
+
     return data
-
-
 # =========================
 # RUN BUTTON
 # =========================
