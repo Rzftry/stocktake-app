@@ -4,119 +4,89 @@ import pandas as pd
 import re
 from io import BytesIO
 
-st.set_page_config(page_title="Stocktake Analytics", layout="wide")
+st.title("Stocktake Analytics App")
 
-st.title("📊 Stocktake Analytics App")
+url = st.text_input("Paste GitHub TXT URL")
 
-url = st.text_input("Paste GitHub RAW TXT URL")
-
-
-def safe_float(x):
+def fix_num(x):
+    if x.endswith("-"):
+        return -float(x.replace("-", ""))
     try:
-        x = str(x).strip()
-        if not x:
-            return 0
-        if x.endswith("-"):
-            return -float(x.replace("-", ""))
         return float(x)
     except:
-        return 0
-
-
-def get(nums, i):
-    return safe_float(nums[i]) if len(nums) > i else 0
+        return 0.0
 
 
 def parse(txt):
-
     lines = txt.split("\n")
 
-    data = []
+    items = []
     current = None
 
     for line in lines:
-        line = line.rstrip()
+        line = line.strip()
 
         if not line:
             continue
 
-        # detect product row (SKU row)
-        if re.match(r'^\s*\d+\s{2,}', line) and "Outright:" not in line:
-
-            parts = re.split(r'\s{2,}', line.strip())
-
-            if len(parts) >= 4:
-                try:
-                    current = {
-                        "dept": parts[0],
-                        "department": parts[1],
-                        "brand": parts[2],
-                        "sku_desc": parts[3]
-                    }
-                    data.append(current)
-                except:
-                    pass
-
+        if "PAGE" in line or "Report Code" in line:
             continue
 
-        # detect Outright row
+        # SKU detect
+        m = re.match(r'^(\d+)\s+(.+?)\s{2,}(.+?)\s+(\d{6,})\s+(.*)$', line)
+
+        if m:
+            current = {
+                "dept": m.group(1),
+                "brand": m.group(3),
+                "sku": m.group(4),
+                "desc": m.group(5)
+            }
+            items.append(current)
+
         if "Outright:" in line and current:
+            nums = re.findall(r'[\d\.\-]+', line)
 
-            nums = re.findall(r'-?\d+\.?\d*', line)
-
-            def safe(i):
-                try:
-                    return float(nums[i])
-                except:
-                    return 0
-
-            if len(nums) >= 8:
-
-                current.update({
-                    "actual_qty": safe(0),
-                    "actual_cost": safe(1),
-                    "actual_retail": safe(2),
-                    "actual_markon": safe(3),
-
-                    "ri_qty": safe(4),
-                    "ri_cost": safe(5),
-                    "ri_retail": safe(6),
-                    "ri_markon": safe(7),
-
-                    "var_qty": safe(8),
-                    "var_cost": safe(9),
-                    "var_retail": safe(10),
-                    "var_markon": safe(11),
-                })
-
-    return data
+            if len(nums) >= 12:
+                current["actual_qty"] = fix_num(nums[0])
+                current["actual_cost"] = fix_num(nums[1])
+                current["actual_retail"] = fix_num(nums[2])
+                current["actual_markon"]: fix_num(nums[3])
+                current["ri_qty"] = fix_num(nums[4])
+                current["ri_cost"] = fix_num(nums[5])
+                current["ri_retail"] = fix_num(nums[6])
+                current["ri_markon"]: fix_num(nums[7])
+                current["var_qty"] = fix_num(nums[8])
+                current["var_cost"] = fix_num(nums[9])
+                current["var_retail"] = fix_num(nums[10])
+                current["var_markon"] = fix_num(nums[11])
+    })
+    return items
 
 
 if st.button("Run Parse"):
 
-    if not url:
-        st.warning("Please paste TXT URL")
-        st.stop()
+    if url:
+        txt = requests.get(url).text
+        data = parse(txt)
 
-    txt = requests.get(url).text
-    data = parse(txt)
+        df = pd.DataFrame(data)
 
-    df = pd.DataFrame(data)
+        st.subheader("Raw Data")
+        st.dataframe(df)
 
-    st.subheader("📄 Raw Data")
-    st.dataframe(df, use_container_width=True)
+        # Variance only
+        st.subheader("Variance Only")
+        st.dataframe(df[df["var_qty"] != 0])
 
-    st.subheader("📉 Variance Only")
-    st.dataframe(df[df["var_qty"] != 0])
+        # Excel download
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Raw Data")
+            df[df["var_qty"] != 0].to_excel(writer, index=False, sheet_name="Variance")
 
-    output = BytesIO()
-
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Raw Data")
-        df[df["var_qty"] != 0].to_excel(writer, index=False, sheet_name="Variance")
-
-    st.download_button(
-        "⬇ Download Excel",
-        output.getvalue(),
-        file_name="stocktake.xlsx"
-    )
+        st.download_button(
+            "Download Excel",
+            output.getvalue(),
+            file_name="stocktake.xlsx"
+        )
