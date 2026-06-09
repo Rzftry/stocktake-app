@@ -77,24 +77,27 @@ def parse(txt):
             nums = re.findall(r'[\d\.\-]+', line)
 
             # IMPORTANT FIX HERE
-            if len(nums) >= 12:
+            if len(nums) >= 8:
 
-                current.update({
-                    "actual_qty": float(nums[0]),
-                    "actual_cost": float(nums[1]),
-                    "actual_retail": float(nums[2]),
-                    "actual_markon": float(nums[3]),
+    def get(i):
+        return float(nums[i]) if len(nums) > i else 0
 
-                    "ri_qty": float(nums[4]),
-                    "ri_cost": float(nums[5]),
-                    "ri_retail": float(nums[6]),
-                    "ri_markon": float(nums[7]),
+    current.update({
+        "actual_qty": get(0),
+        "actual_cost": get(1),
+        "actual_retail": get(2),
+        "actual_markon": get(3),
 
-                    "var_qty": float(nums[8]),
-                    "var_cost": float(nums[9]),
-                    "var_retail": float(nums[10]),
-                    "var_markon": float(nums[11]),
-                })
+        "ri_qty": get(4),
+        "ri_cost": get(5),
+        "ri_retail": get(6),
+        "ri_markon": get(7),
+
+        "var_qty": get(8),
+        "var_cost": get(9),
+        "var_retail": get(10),
+        "var_markon": get(11),
+    })
 
     return data
 # =========================
