@@ -77,7 +77,7 @@ def parse(txt):
             nums = re.findall(r'[\d\.\-]+', line)
 
             # IMPORTANT FIX HERE
-            if len(nums) >= 8:
+           if len(nums) >= 8:
 
     def get(i):
         return float(nums[i]) if len(nums) > i else 0
@@ -98,7 +98,6 @@ def parse(txt):
         "var_retail": get(10),
         "var_markon": get(11),
     })
-
     return data
 # =========================
 # RUN BUTTON
