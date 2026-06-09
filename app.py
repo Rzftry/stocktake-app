@@ -55,8 +55,20 @@ def parse(txt):
 
             nums = re.findall(r'[\d\.\-]+', line)
 
-            def get(i):
-                return float(nums[i]) if len(nums) > i else 0
+            def safe_float(x):
+    try:
+        x = str(x).strip()
+        if not x:
+            return 0
+        if x.endswith("-"):
+            return -float(x.replace("-", ""))
+        return float(x)
+    except:
+        return 0
+
+
+def get(i):
+    return safe_float(nums[i]) if len(nums) > i else 0
 
             if len(nums) >= 8:
 
