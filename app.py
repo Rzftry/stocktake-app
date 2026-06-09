@@ -55,7 +55,7 @@ def parse(txt):
 
             nums = re.findall(r'[\d\.\-]+', line)
 
-            def safe_float(x):
+           def safe_float(x):
     try:
         x = str(x).strip()
         if not x:
