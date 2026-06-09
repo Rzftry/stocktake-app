@@ -60,7 +60,7 @@ def parse(txt):
                 current["var_cost"] = fix_num(nums[9])
                 current["var_retail"] = fix_num(nums[10])
                 current["var_markon"] = fix_num(nums[11])
-    })
+
     return items
 
 
