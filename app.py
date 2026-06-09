@@ -86,21 +86,23 @@ def parse(txt):
         if "Outright:" in line and current:
             nums = re.findall(r'[\d\.\-]+', line)
 
-            if len(nums) >= 10:
-                current.update({
-                    "actual_qty": fix_num(nums[0]),
-                    "actual_cost": fix_num(nums[1]),
-                    "actual_retail": fix_num(nums[2]),
+           if len(nums) >= 12:
+    current.update({
+        "actual_qty": fix_num(nums[0]),
+        "actual_cost": fix_num(nums[1]),
+        "actual_retail": fix_num(nums[2]),
+        "actual_markon": fix_num(nums[3]),
 
-                    "ri_qty": fix_num(nums[4]),
-                    "ri_cost": fix_num(nums[5]),
-                    "ri_retail": fix_num(nums[6]),
+        "ri_qty": fix_num(nums[4]),
+        "ri_cost": fix_num(nums[5]),
+        "ri_retail": fix_num(nums[6]),
+        "ri_markon": fix_num(nums[7]),
 
-                    "var_qty": fix_num(nums[8]),
-                    "var_cost": fix_num(nums[9]),
-                    "var_retail": fix_num(nums[10]),
-                })
-
+        "var_qty": fix_num(nums[8]),
+        "var_cost": fix_num(nums[9]),
+        "var_retail": fix_num(nums[10]),
+        "var_markon": fix_num(nums[11]),
+    })
     return data
 
 
