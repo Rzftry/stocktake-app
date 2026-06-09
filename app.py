@@ -30,63 +30,63 @@ def get(nums, i):
 def parse(txt):
 
     lines = txt.split("\n")
+
     data = []
     current = None
 
     for line in lines:
-        line = line.strip()
+        line = line.rstrip()
 
         if not line:
             continue
 
-        # skip headers/noise
-        if any(x in line.upper() for x in [
-            "DEPT", "BRAND", "SHORT SKU",
-            "ACTUAL STOCK", "VARIANCE",
-            "MARK ON%", "REPORT CODE",
-            "STORE", "SELECTION"
-        ]):
+        # detect product row (SKU row)
+        if re.match(r'^\s*\d+\s{2,}', line) and "Outright:" not in line:
+
+            parts = re.split(r'\s{2,}', line.strip())
+
+            if len(parts) >= 4:
+                try:
+                    current = {
+                        "dept": parts[0],
+                        "department": parts[1],
+                        "brand": parts[2],
+                        "sku_desc": parts[3]
+                    }
+                    data.append(current)
+                except:
+                    pass
+
             continue
 
-        if "<----" in line or "---->" in line or "-----" in line:
-            continue
-
-        # detect product row
-        m = re.match(r'^(\d+)\s+(.+?)\s{2,}(.+?)\s+(\d{6,})\s+(.*)$', line)
-
-        if m:
-            current = {
-                "dept": m.group(1),
-                "department": m.group(2),
-                "brand": m.group(3),
-                "sku": m.group(4),
-                "description": m.group(5)
-            }
-            data.append(current)
-            continue
-
-        # detect value row
+        # detect Outright row
         if "Outright:" in line and current:
 
-            nums = re.findall(r'[\d\.\-]+', line)
+            nums = re.findall(r'-?\d+\.?\d*', line)
+
+            def safe(i):
+                try:
+                    return float(nums[i])
+                except:
+                    return 0
 
             if len(nums) >= 8:
 
                 current.update({
-                    "actual_qty": get(nums, 0),
-                    "actual_cost": get(nums, 1),
-                    "actual_retail": get(nums, 2),
-                    "actual_markon": get(nums, 3),
+                    "actual_qty": safe(0),
+                    "actual_cost": safe(1),
+                    "actual_retail": safe(2),
+                    "actual_markon": safe(3),
 
-                    "ri_qty": get(nums, 4),
-                    "ri_cost": get(nums, 5),
-                    "ri_retail": get(nums, 6),
-                    "ri_markon": get(nums, 7),
+                    "ri_qty": safe(4),
+                    "ri_cost": safe(5),
+                    "ri_retail": safe(6),
+                    "ri_markon": safe(7),
 
-                    "var_qty": get(nums, 8),
-                    "var_cost": get(nums, 9),
-                    "var_retail": get(nums, 10),
-                    "var_markon": get(nums, 11),
+                    "var_qty": safe(8),
+                    "var_cost": safe(9),
+                    "var_retail": safe(10),
+                    "var_markon": safe(11),
                 })
 
     return data
